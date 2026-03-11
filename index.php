@@ -27,6 +27,11 @@ $profile = Auth::getProfile();
         <a href="debug.php">Debug</a>
         <a href="settings.php">Settings</a>
         <a href="dbverify.php">Database</a>
+        <div class="menu-music" id="menu-music" style="display:none;">
+            <button class="music-toggle" id="menu-music-toggle" onclick="toggleMenuMusic()" title="Toggle music">&#9835;</button>
+            <button class="music-skip" id="menu-music-skip" onclick="skipMenuTrack()" title="Next track">&#9197;</button>
+            <span class="music-title" id="menu-music-title"></span>
+        </div>
     </div>
     <div class="home-header">
         <h1>Sleuth</h1>
@@ -118,5 +123,6 @@ $profile = Auth::getProfile();
 </div>
 
 <script src="assets/js/home.js"></script>
+<script src="assets/js/menu-music.js"></script>
 </body>
 </html>

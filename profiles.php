@@ -230,6 +230,54 @@
         }
         .managing .delete-btn { display: flex; }
         .managing .profile-card { position: relative; }
+
+        .menu-music {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+        .menu-music-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+            color: var(--text-dim);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .menu-music-toggle:hover { border-color: var(--accent); color: var(--text); }
+        .menu-music-toggle.playing { color: var(--accent); border-color: var(--accent); background: rgba(233,69,96,0.15); }
+        .menu-music-skip {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-panel);
+            color: var(--text-dim);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .menu-music-skip:hover { border-color: var(--accent); color: var(--text); }
+        .menu-music-title {
+            font-size: 11px;
+            color: var(--text-dim);
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 <body>
@@ -237,6 +285,11 @@
 <div class="picker" id="picker">
     <h1>Sleuth</h1>
     <p class="subtitle">Who's playing?</p>
+    <div class="menu-music" id="menu-music" style="display:none;">
+        <button class="menu-music-toggle" id="menu-music-toggle" onclick="toggleMenuMusic()" title="Toggle music">&#9835;</button>
+        <button class="menu-music-skip" id="menu-music-skip" onclick="skipMenuTrack()" title="Next track">&#9197;</button>
+        <span class="menu-music-title" id="menu-music-title"></span>
+    </div>
     <div class="profile-grid" id="profile-grid"></div>
     <div>
         <span class="manage-link" id="manage-link" onclick="toggleManage()">Manage Profiles</span>
@@ -417,5 +470,6 @@ document.addEventListener('keydown', e => {
 
 document.addEventListener('DOMContentLoaded', loadProfiles);
 </script>
+<script src="assets/js/menu-music.js"></script>
 </body>
 </html>

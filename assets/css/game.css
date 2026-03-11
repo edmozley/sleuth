@@ -1120,6 +1120,12 @@ body.page-game {
     background: rgba(233, 69, 96, 0.1);
 }
 
+.home-nav .menu-music {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .home-header h1 {
     color: var(--accent);
     font-family: 'Permanent Marker', cursive;
