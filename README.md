@@ -96,7 +96,7 @@ The game works without image or music APIs — you just won't get artwork or amb
 
 ## Demo games
 
-The `demo-games/` folder contains 9 pre-generated mysteries with full AI artwork, ready to play immediately — no API keys required.
+The `demo-games/` folder contains 9 pre-generated mysteries with full AI artwork, ready to play immediately — no image or music API keys required. You still need an Anthropic key for gameplay (character dialogue, action resolution, etc.).
 
 To import a demo game:
 
