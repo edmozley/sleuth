@@ -4,7 +4,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://mysql.com)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
 [![Claude AI](https://img.shields.io/badge/Claude-Anthropic-D4A574?logo=anthropic&logoColor=white)](https://anthropic.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 An AI-powered murder mystery game. Every case is procedurally generated — unique plots, characters, locations, clues, and artwork — all created on the fly by AI. Explore crime scenes, interrogate suspects, collect evidence, and make your accusation before the trail goes cold.
 
@@ -147,4 +147,4 @@ sleuth/
 
 ## License
 
-MIT
+[GNU General Public License v3.0](LICENSE)
