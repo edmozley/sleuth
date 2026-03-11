@@ -1,5 +1,11 @@
 # Sleuth
 
+[![PHP](https://img.shields.io/badge/PHP-8.0+-777BB4?logo=php&logoColor=white)](https://php.net)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql&logoColor=white)](https://mysql.com)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
+[![Claude AI](https://img.shields.io/badge/Claude-Anthropic-D4A574?logo=anthropic&logoColor=white)](https://anthropic.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 An AI-powered murder mystery game. Every case is procedurally generated — unique plots, characters, locations, clues, and artwork — all created on the fly by AI. Explore crime scenes, interrogate suspects, collect evidence, and make your accusation before the trail goes cold.
 
 ## How it works
@@ -26,20 +32,27 @@ You get 5 probes (hard interrogation presses) and 3 accusations per game. Run ou
 - **Images:** OpenAI DALL-E 3 or Venice.ai (configurable)
 - **Music:** Freesound API for ambient audio
 
-## Requirements
+## Quick start with Docker
 
-- PHP 8.0+
-- MySQL 5.7+ / MariaDB 10.3+
-- A web server (Apache/Nginx) or WAMP/XAMPP/MAMP
-- An [Anthropic API key](https://console.anthropic.com/) (required)
-- An [OpenAI API key](https://platform.openai.com/api-keys) or [Venice.ai API key](https://venice.ai/settings/api) (optional, for artwork)
-- A [Freesound API key](https://freesound.org/apiv2/apply/) (optional, for ambient music)
+The fastest way to get running:
 
-## Setup
+```bash
+git clone https://github.com/edmozley/sleuth.git
+cd sleuth
+docker compose up -d
+```
+
+Then visit [http://localhost:8080/dbverify.php](http://localhost:8080/dbverify.php) to set up the database tables, and [http://localhost:8080/settings.php](http://localhost:8080/settings.php) to add your API keys.
+
+The database and generated artwork are stored in Docker volumes so they persist across restarts.
+
+## Manual setup
+
+If you prefer to run without Docker (e.g. on WAMP, XAMPP, or MAMP):
 
 1. **Clone the repo** into your web server's document root:
    ```
-   git clone https://github.com/yourusername/sleuth.git
+   git clone https://github.com/edmozley/sleuth.git
    ```
 
 2. **Create the config file** by copying the example:
@@ -69,6 +82,17 @@ You get 5 probes (hard interrogation presses) and 3 accusations per game. Run ou
    ```
    http://localhost/sleuth/
    ```
+
+## API keys
+
+| Service | Required | Purpose |
+|---------|----------|---------|
+| [Anthropic (Claude)](https://console.anthropic.com/) | Yes | Plot generation, character dialogue, action resolution |
+| [OpenAI (DALL-E 3)](https://platform.openai.com/api-keys) | No | Artwork for locations, characters, and objects |
+| [Venice.ai](https://venice.ai/settings/api) | No | Alternative image provider (cheaper) |
+| [Freesound](https://freesound.org/apiv2/apply/) | No | Ambient music matched to each game's setting |
+
+The game works without image or music APIs — you just won't get artwork or ambient audio.
 
 ## Project structure
 
@@ -102,6 +126,8 @@ sleuth/
 ├── debug.php               # Game inspector (spoilers!)
 ├── dbverify.php            # Auto-migration tool
 ├── help.php                # In-app help guide
+├── docker-compose.yml      # Docker setup
+├── Dockerfile              # PHP + Apache container
 ├── config.json             # DB credentials (gitignored)
 └── config.example.json     # Template config
 ```

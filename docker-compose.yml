@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    volumes:
+      - artwork-images:/var/www/html/assets/images
+      - artwork-covers:/var/www/html/assets/covers
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - SLEUTH_DB_HOST=db
+      - SLEUTH_DB_PORT=3306
+      - SLEUTH_DB_NAME=sleuth
+      - SLEUTH_DB_USER=sleuth
+      - SLEUTH_DB_PASS=sleuth
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: sleuth
+      MYSQL_USER: sleuth
+      MYSQL_PASSWORD: sleuth
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  db-data:
+  artwork-images:
+  artwork-covers:

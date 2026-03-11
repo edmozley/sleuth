@@ -16,10 +16,32 @@ class Database
         $defaults = [
             'host' => 'localhost',
             'port' => 3306,
-            'dbname' => 'quests',
+            'dbname' => 'sleuth',
             'username' => 'root',
             'password' => ''
         ];
+
+        // Environment variables take priority (for Docker)
+        $envMap = [
+            'SLEUTH_DB_HOST' => 'host',
+            'SLEUTH_DB_PORT' => 'port',
+            'SLEUTH_DB_NAME' => 'dbname',
+            'SLEUTH_DB_USER' => 'username',
+            'SLEUTH_DB_PASS' => 'password'
+        ];
+        $fromEnv = false;
+        foreach ($envMap as $env => $key) {
+            $val = getenv($env);
+            if ($val !== false) {
+                $defaults[$key] = $key === 'port' ? (int)$val : $val;
+                $fromEnv = true;
+            }
+        }
+        if ($fromEnv) {
+            return $defaults;
+        }
+
+        // Fall back to config.json
         if (!file_exists(self::$configFile)) {
             return $defaults;
         }
