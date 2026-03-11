@@ -164,7 +164,7 @@ $tables = [
 
     'settings' => "CREATE TABLE IF NOT EXISTS settings (
         setting_key VARCHAR(100) PRIMARY KEY,
-        setting_value TEXT NOT NULL DEFAULT ''
+        setting_value VARCHAR(2000) NOT NULL DEFAULT ''
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 ];
 
