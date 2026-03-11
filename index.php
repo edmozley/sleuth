@@ -59,6 +59,12 @@ $profile = Auth::getProfile();
         </div>
     </div>
 
+    <div id="import-drop" class="import-drop">
+        <input type="file" id="import-file" accept=".zip" style="display:none">
+        <span class="import-drop-icon">&#128230;</span>
+        <span class="import-drop-text">Drop a .zip to import a game, or <a href="#" onclick="document.getElementById('import-file').click();return false;">browse</a></span>
+    </div>
+
     <div id="saved-games" class="game-grid"></div>
 
     <!-- Game Detail Modal -->
@@ -77,6 +83,7 @@ $profile = Auth::getProfile();
             <p class="detail-summary" id="detail-summary"></p>
             <div class="detail-actions">
                 <button class="btn btn-primary" id="detail-resume" onclick="resumeFromDetail()">Resume</button>
+                <button class="btn btn-secondary" id="detail-export" onclick="exportFromDetail()">Export</button>
                 <button class="btn btn-danger" id="detail-delete" onclick="deleteFromDetail()">Delete</button>
                 <a class="btn btn-secondary" id="detail-debug" href="#" target="_blank" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">Debug</a>
             </div>

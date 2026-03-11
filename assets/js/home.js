@@ -126,6 +126,8 @@ function showGameDetail(g) {
     const deleteBtn = document.getElementById('detail-delete');
     const debugBtn = document.getElementById('detail-debug');
 
+    const exportBtn = document.getElementById('detail-export');
+
     if (g.is_own) {
         if (g.status === 'active') {
             resumeBtn.textContent = (g.moves_taken > 0) ? 'Resume' : 'Play';
@@ -136,12 +138,14 @@ function showGameDetail(g) {
         resumeBtn.style.display = '';
         deleteBtn.style.display = '';
         debugBtn.style.display = '';
+        exportBtn.style.display = '';
     } else {
         resumeBtn.textContent = 'Clone';
         resumeBtn.onclick = cloneFromDetail;
         resumeBtn.style.display = '';
         deleteBtn.style.display = 'none';
         debugBtn.style.display = 'none';
+        exportBtn.style.display = 'none';
     }
 
     modal.classList.add('active');
@@ -396,6 +400,41 @@ function updateArtProgress(container, counts) {
     }).join('');
 }
 
+// ---- Export / Import ----
+function exportFromDetail() {
+    if (!selectedGame) return;
+    window.location = 'api/export_game.php?game_id=' + selectedGame.id;
+}
+
+async function importGame(file) {
+    const dropZone = document.getElementById('import-drop');
+    const dropText = dropZone.querySelector('.import-drop-text');
+    const origText = dropText.innerHTML;
+    dropText.textContent = 'Importing...';
+    dropZone.classList.add('importing');
+
+    try {
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch('api/import_game.php', { method: 'POST', body: form });
+        const result = await res.json();
+        if (result.success) {
+            dropText.textContent = 'Imported! Loading...';
+            await loadSavedGames();
+            dropText.innerHTML = origText;
+            dropZone.classList.remove('importing');
+        } else {
+            showError('Import failed: ' + (result.error || 'Unknown error'));
+            dropText.innerHTML = origText;
+            dropZone.classList.remove('importing');
+        }
+    } catch (e) {
+        showError('Import failed: ' + e.message);
+        dropText.innerHTML = origText;
+        dropZone.classList.remove('importing');
+    }
+}
+
 // Load saved games on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadSavedGames();
@@ -417,4 +456,37 @@ document.addEventListener('DOMContentLoaded', () => {
             hideGameDetail();
         }
     });
+
+    // Import drop zone
+    const dropZone = document.getElementById('import-drop');
+    const fileInput = document.getElementById('import-file');
+
+    if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.name.endsWith('.zip')) {
+                importGame(file);
+            } else {
+                showError('Please drop a .zip file');
+            }
+        });
+    }
+
+    if (fileInput) {
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files[0]) {
+                importGame(fileInput.files[0]);
+                fileInput.value = '';
+            }
+        });
+    }
 });

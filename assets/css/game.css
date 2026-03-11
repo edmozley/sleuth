@@ -1244,6 +1244,30 @@ body.page-game {
     display: block;
 }
 
+/* ---- Import Drop Zone ---- */
+.import-drop {
+    max-width: 520px;
+    margin: 0 auto 20px;
+    padding: 16px 20px;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.9em;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: default;
+}
+.import-drop a { color: var(--accent); }
+.import-drop-icon { font-size: 1.4em; margin-right: 8px; vertical-align: middle; }
+.import-drop.drag-over {
+    border-color: var(--accent);
+    background: rgba(233, 69, 96, 0.08);
+}
+.import-drop.importing {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
 /* ---- Game Cards Grid ---- */
 .game-grid {
     display: grid;

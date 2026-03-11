@@ -1,7 +1,10 @@
 FROM php:8.3-apache
 
+# Install system dependencies for zip extension
+RUN apt-get update && apt-get install -y libzip-dev && rm -rf /var/lib/apt/lists/*
+
 # Install PHP extensions needed by Sleuth
-RUN docker-php-ext-install pdo pdo_mysql
+RUN docker-php-ext-install pdo pdo_mysql zip
 
 # Enable Apache mod_rewrite (in case needed later)
 RUN a2enmod rewrite
