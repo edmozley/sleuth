@@ -94,6 +94,19 @@ If you prefer to run without Docker (e.g. on WAMP, XAMPP, or MAMP):
 
 The game works without image or music APIs — you just won't get artwork or ambient audio.
 
+## Demo games
+
+The `demo-games/` folder contains 9 pre-generated mysteries with full AI artwork, ready to play immediately — no API keys required.
+
+To import a demo game:
+
+1. Go to the Sleuth home screen
+2. Click **browse** in the import drop zone (or drag and drop a file onto it)
+3. Select any `.zip` file from the `demo-games/` folder
+4. The game appears on your home screen, ready to play
+
+**Do not unzip the files** — import the `.zip` directly. Each file contains all the game data and artwork bundled together.
+
 ## Project structure
 
 ```
