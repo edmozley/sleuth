@@ -161,16 +161,17 @@ try {
     }
 
     // 7. Create clues
-    $insertClue = $pdo->prepare("INSERT INTO clues (game_id, location_id, object_id, character_id, clue_text, discovery_method, is_red_herring, discovered) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $insertClue = $pdo->prepare("INSERT INTO clues (game_id, description, category, importance, linked_location_id, linked_object_id, linked_character_id, discovery_method, discovered) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     foreach (($data['clues'] ?? []) as $clue) {
         $insertClue->execute([
             $gameId,
+            $clue['description'],
+            $clue['category'] ?? 'observation',
+            $clue['importance'] ?? 'minor',
             $locIds[$clue['location']] ?? null,
             $objIds[$clue['object']] ?? null,
             $charIds[$clue['character']] ?? null,
-            $clue['clue_text'],
             $clue['discovery_method'] ?? null,
-            $clue['is_red_herring'] ?? 0,
             $clue['discovered'] ?? 0
         ]);
     }

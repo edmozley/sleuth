@@ -121,19 +121,20 @@ try {
     }
 
     // Clues
-    $stmt = $pdo->prepare("SELECT clue_text, discovery_method, is_red_herring, discovered, location_id, object_id, character_id FROM clues WHERE game_id = ?");
+    $stmt = $pdo->prepare("SELECT description, category, importance, discovery_method, discovered, linked_location_id, linked_object_id, linked_character_id FROM clues WHERE game_id = ?");
     $stmt->execute([$gameId]);
     $clueRows = $stmt->fetchAll();
     $clues = [];
     foreach ($clueRows as $clue) {
         $clues[] = [
-            'clue_text' => $clue['clue_text'],
+            'description' => $clue['description'],
+            'category' => $clue['category'],
+            'importance' => $clue['importance'],
             'discovery_method' => $clue['discovery_method'],
-            'is_red_herring' => (int)$clue['is_red_herring'],
             'discovered' => (int)$clue['discovered'],
-            'location' => $locIdToIndex[$clue['location_id']] ?? null,
-            'object' => $objIdToIndex[$clue['object_id']] ?? null,
-            'character' => $charIdToIndex[$clue['character_id']] ?? null
+            'location' => $locIdToIndex[$clue['linked_location_id']] ?? null,
+            'object' => $objIdToIndex[$clue['linked_object_id']] ?? null,
+            'character' => $charIdToIndex[$clue['linked_character_id']] ?? null
         ];
     }
 
