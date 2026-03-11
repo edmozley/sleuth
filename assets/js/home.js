@@ -417,7 +417,16 @@ async function importGame(file) {
         const form = new FormData();
         form.append('file', file);
         const res = await fetch('api/import_game.php', { method: 'POST', body: form });
-        const result = await res.json();
+        const text = await res.text();
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseErr) {
+            showError('Import failed — server error', text);
+            dropText.innerHTML = origText;
+            dropZone.classList.remove('importing');
+            return;
+        }
         if (result.success) {
             dropText.textContent = 'Imported! Loading...';
             await loadSavedGames();
