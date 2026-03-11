@@ -298,6 +298,7 @@ $profile = Auth::getProfile();
         <a href="#images">Image viewer</a>
         <a href="#keyboard">Keyboard shortcuts</a>
         <a href="#game-management">Saving & managing games</a>
+        <a href="#export-import">Export & import</a>
 
         <div class="nav-section">Administration</div>
         <a href="#settings">Settings & API keys</a>
@@ -558,6 +559,29 @@ $profile = Auth::getProfile();
         </table>
         <h3>Restarting</h3>
         <p>In-game, click <strong>Restart</strong> to reset your progress on the current case. This clears your moves, inventory, and notebook but keeps the same mystery &mdash; useful if you want a fresh attempt at the same case.</p>
+    </div>
+
+    <!-- Export & Import -->
+    <div class="help-section" id="export-import">
+        <h2>Export & import</h2>
+        <p>You can share games between devices or back them up using the export/import feature.</p>
+        <h3>Exporting</h3>
+        <p>Click any of your games on the home screen to open the detail modal, then click <strong>Export</strong>. This downloads a <code>.zip</code> file containing:</p>
+        <ul>
+            <li>All game data (plot, characters, locations, objects, clues, progress) as JSON</li>
+            <li>All generated artwork (cover, location images, character portraits, object images)</li>
+        </ul>
+        <p>The button shows "Exporting..." while the file is being prepared.</p>
+        <h3>Importing</h3>
+        <p>On the home screen, you'll see a drop zone between the new game buttons and your saved games. You can:</p>
+        <ul>
+            <li><strong>Drag and drop</strong> a <code>.zip</code> file onto the drop zone</li>
+            <li><strong>Click "browse"</strong> to pick a file from your computer</li>
+        </ul>
+        <p>The game is imported with fresh IDs and assigned to your current profile. All artwork is restored automatically.</p>
+        <div class="help-tip">
+            <strong>Tip:</strong> Export is a great way to move games between a local setup and a Docker instance, or to share a particularly good mystery with a friend.
+        </div>
     </div>
 
     <!-- Settings -->

@@ -403,7 +403,34 @@ function updateArtProgress(container, counts) {
 // ---- Export / Import ----
 function exportFromDetail() {
     if (!selectedGame) return;
-    window.location = 'api/export_game.php?game_id=' + selectedGame.id;
+    const btn = document.getElementById('detail-export');
+    const origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Exporting...';
+
+    // Use fetch to detect errors, then trigger download via blob
+    fetch('api/export_game.php?game_id=' + selectedGame.id)
+        .then(res => {
+            if (res.headers.get('content-type')?.includes('application/json')) {
+                return res.json().then(j => { throw new Error(j.error || 'Export failed'); });
+            }
+            return res.blob().then(blob => {
+                const disposition = res.headers.get('content-disposition') || '';
+                const match = disposition.match(/filename="(.+?)"/);
+                const filename = match ? match[1] : 'sleuth_export.zip';
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        })
+        .catch(e => showError('Export failed: ' + e.message))
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = origText;
+        });
 }
 
 async function importGame(file) {

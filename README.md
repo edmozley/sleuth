@@ -144,6 +144,7 @@ sleuth/
 - **Multi-profile** — Netflix-style profile switching, game cloning between profiles
 - **Custom mysteries** — describe a setting and theme, the AI builds it
 - **Full artwork** — AI-generated images for locations, characters, objects, and covers
+- **Export & import** — download any game as a ZIP (data + artwork) and import on another device or instance
 
 ## License
 
