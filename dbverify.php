@@ -260,21 +260,24 @@ try {
     }
 
     // Migrate API keys from config.json to DB settings table (one-time)
-    $configFile = json_decode(file_get_contents(__DIR__ . '/config.json'), true) ?: [];
-    $migrateKeys = ['anthropic_api_key', 'openai_api_key', 'venice_api_key', 'image_provider', 'freesound_api_key'];
-    $migrated = false;
-    foreach ($migrateKeys as $key) {
-        if (!empty($configFile[$key])) {
-            $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = IF(setting_value = '', VALUES(setting_value), setting_value)");
-            $stmt->execute([$key, $configFile[$key]]);
-            $migrated = true;
+    $configJsonPath = __DIR__ . '/config.json';
+    if (file_exists($configJsonPath)) {
+        $configFile = json_decode(file_get_contents($configJsonPath), true) ?: [];
+        $migrateKeys = ['anthropic_api_key', 'openai_api_key', 'venice_api_key', 'image_provider', 'freesound_api_key'];
+        $migrated = false;
+        foreach ($migrateKeys as $key) {
+            if (!empty($configFile[$key])) {
+                $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = IF(setting_value = '', VALUES(setting_value), setting_value)");
+                $stmt->execute([$key, $configFile[$key]]);
+                $migrated = true;
+            }
         }
-    }
-    if ($migrated) {
-        // Clean API keys from config.json, keep only DB connection fields
-        $cleanConfig = array_intersect_key($configFile, array_flip(['host', 'port', 'dbname', 'username', 'password']));
-        file_put_contents(__DIR__ . '/config.json', json_encode($cleanConfig, JSON_PRETTY_PRINT));
-        $results[] = ['name' => 'Settings Migration', 'status' => 'ok', 'message' => 'API keys migrated from config.json to database'];
+        if ($migrated) {
+            // Clean API keys from config.json, keep only DB connection fields
+            $cleanConfig = array_intersect_key($configFile, array_flip(['host', 'port', 'dbname', 'username', 'password']));
+            file_put_contents($configJsonPath, json_encode($cleanConfig, JSON_PRETTY_PRINT));
+            $results[] = ['name' => 'Settings Migration', 'status' => 'ok', 'message' => 'API keys migrated from config.json to database'];
+        }
     }
 
     // Check Anthropic API key
