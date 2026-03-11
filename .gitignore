@@ -1,0 +1,10 @@
+# Config (contains DB credentials)
+config.json
+
+# Generated artwork
+assets/covers/*
+assets/images/*
+
+# Keep the directories
+!assets/covers/.gitkeep
+!assets/images/.gitkeep
