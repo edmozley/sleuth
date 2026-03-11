@@ -69,6 +69,10 @@ try {
         $characters[] = [
             'name' => $ch['name'],
             'description' => $ch['description'],
+            'personality' => $ch['personality'] ?? '',
+            'backstory' => $ch['backstory'] ?? '',
+            'secrets' => $ch['secrets'] ?? '',
+            'knowledge' => $ch['knowledge'] ?? '',
             'role' => $ch['role'],
             'location' => $locIdToIndex[$ch['location_id']] ?? null,
             'is_alive' => (int)$ch['is_alive'],

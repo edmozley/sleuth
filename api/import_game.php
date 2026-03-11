@@ -101,7 +101,7 @@ try {
 
     // 5. Create characters (index → new ID map)
     $charIds = [];
-    $insertChar = $pdo->prepare("INSERT INTO characters_game (game_id, name, description, role, location_id, is_alive, trust_level, has_met, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $insertChar = $pdo->prepare("INSERT INTO characters_game (game_id, name, description, personality, backstory, secrets, knowledge, role, location_id, is_alive, trust_level, has_met, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     foreach (($data['characters'] ?? []) as $i => $ch) {
         $imagePath = null;
         if ($ch['image'] ?? null) {
@@ -112,7 +112,10 @@ try {
             }
         }
         $insertChar->execute([
-            $gameId, $ch['name'], $ch['description'], $ch['role'],
+            $gameId, $ch['name'], $ch['description'],
+            $ch['personality'] ?? '', $ch['backstory'] ?? '',
+            $ch['secrets'] ?? '', $ch['knowledge'] ?? '',
+            $ch['role'],
             $locIds[$ch['location']] ?? null,
             $ch['is_alive'] ?? 1,
             $ch['trust_level'] ?? 50,
