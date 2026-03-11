@@ -37,7 +37,7 @@ try {
     $stmt->execute([
         $data['game']['title'],
         $data['game']['summary'] ?? null,
-        $data['game']['status'] ?? 'active',
+        'active',
         $data['game']['difficulty'] ?? null,
         $profileId
     ]);
@@ -82,7 +82,7 @@ try {
         }
         $insertLoc->execute([
             $gameId, $loc['name'], $loc['description'], $loc['short_description'] ?? null,
-            $loc['is_locked'] ?? 0, $loc['lock_reason'] ?? null, $loc['discovered'] ?? 0,
+            $loc['is_locked'] ?? 0, $loc['lock_reason'] ?? null, 0,
             $loc['x_pos'] ?? 0, $loc['y_pos'] ?? 0, $loc['z_pos'] ?? 0,
             $imagePath
         ]);
@@ -117,9 +117,9 @@ try {
             $ch['secrets'] ?? '', $ch['knowledge'] ?? '',
             $ch['role'],
             $locIds[$ch['location']] ?? null,
-            $ch['is_alive'] ?? 1,
-            $ch['trust_level'] ?? 50,
-            $ch['has_met'] ?? 0,
+            1,
+            50,
+            0,
             $imagePath
         ]);
         $charIds[$i] = (int)$pdo->lastInsertId();
@@ -137,15 +137,18 @@ try {
                 file_put_contents(__DIR__ . '/../' . $imagePath, $imgData);
             }
         }
+        // Use original location/hidden state as starting state
+        $origLocId = $locIds[$obj['original_location'] ?? $obj['location']] ?? ($locIds[$obj['location']] ?? null);
+        $origHidden = $obj['original_is_hidden'] ?? ($obj['is_hidden'] ?? 0);
         $insertObj->execute([
             $gameId, $obj['name'], $obj['description'], $obj['inspect_text'] ?? null,
-            $locIds[$obj['location']] ?? null,
-            $charIds[$obj['character']] ?? null,
-            $obj['is_hidden'] ?? 0, $obj['is_pickupable'] ?? 0,
+            $origLocId,
+            null, // character_id — not held by anyone at start
+            $origHidden, $obj['is_pickupable'] ?? 0,
             $obj['is_evidence'] ?? 0, $obj['is_weapon'] ?? 0,
             null, // parent_object_id fixed below
-            $locIds[$obj['original_location']] ?? ($locIds[$obj['location']] ?? null),
-            $obj['original_is_hidden'] ?? ($obj['is_hidden'] ?? 0),
+            $origLocId,
+            $origHidden,
             $imagePath
         ]);
         $objIds[$i] = (int)$pdo->lastInsertId();
@@ -177,7 +180,7 @@ try {
             $objIds[$clue['object']] ?? null,
             $charIds[$clue['character']] ?? null,
             $clue['discovery_method'] ?? null,
-            $clue['discovered'] ?? 0
+            0
         ]);
     }
 
@@ -190,9 +193,9 @@ try {
     $stmt->execute([
         $gameId,
         $startLocId,
-        $ps['moves_taken'] ?? 0,
-        $ps['accusations_remaining'] ?? 3,
-        $ps['probes_remaining'] ?? 5
+        0,
+        3,
+        5
     ]);
 
     // 9. Copy cover image
