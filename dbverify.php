@@ -201,6 +201,16 @@ try {
         }
     }
 
+    // Fix settings.setting_value from TEXT to VARCHAR (TEXT can't have DEFAULT in strict mode)
+    try {
+        $check = $pdo->prepare("SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'settings' AND COLUMN_NAME = 'setting_value'");
+        $check->execute([$config['dbname']]);
+        $type = $check->fetchColumn();
+        if ($type === 'text') {
+            $pdo->exec("ALTER TABLE settings MODIFY COLUMN setting_value VARCHAR(2000) NOT NULL DEFAULT ''");
+        }
+    } catch (PDOException $e) {}
+
     // Backfill original_location_id and original_is_hidden for existing objects
     try {
         $pdo->exec("UPDATE objects SET original_location_id = location_id WHERE original_location_id IS NULL AND location_id IS NOT NULL");
