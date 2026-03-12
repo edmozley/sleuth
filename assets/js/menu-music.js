@@ -87,5 +87,15 @@
         playMenuTrack(trackIndex + 1);
     };
 
+    window.stopMenuMusic = function() {
+        if (audio) {
+            audio.pause();
+            audio.removeEventListener('ended', onEnded);
+        }
+        playing = false;
+        const toggleBtn = document.getElementById('menu-music-toggle');
+        if (toggleBtn) toggleBtn.classList.remove('playing');
+    };
+
     document.addEventListener('DOMContentLoaded', loadMenuMusic);
 })();

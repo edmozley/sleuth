@@ -158,7 +158,151 @@ function hideGameDetail() {
 
 function resumeFromDetail() {
     if (!selectedGame) return;
+
+    // Cinematic intro for first-time play only
+    if (selectedGame.is_own && selectedGame.status === 'active' && !(selectedGame.moves_taken > 0)) {
+        const game = selectedGame;
+        hideGameDetail();
+        playIntro(game);
+        return;
+    }
+
     window.location = 'game.php?id=' + selectedGame.id;
+}
+
+// ---- Cinematic Intro ----
+let introAudio = null;
+
+function playIntro(game) {
+    const overlay = document.getElementById('intro-overlay');
+    const title = document.getElementById('intro-title');
+    const image = document.getElementById('intro-image');
+    const setting = document.getElementById('intro-setting');
+    const hook = document.getElementById('intro-hook');
+    const beginBtn = document.getElementById('intro-begin');
+
+    // Populate content
+    title.textContent = game.title;
+
+    if (game.cover_image) {
+        image.style.backgroundImage = `url('${game.cover_image}')`;
+        image.style.display = '';
+    } else {
+        image.style.display = 'none';
+    }
+
+    // Setting text — spoiler-free only (backstory reveals the killer!)
+    const settingText = game.summary || game.setting_description || '';
+    setting.textContent = settingText;
+
+    // Hook — the dramatic red text
+    const victim = game.victim_name || 'Someone';
+    hook.textContent = `${victim} has been found dead. You have been called in to investigate.`;
+
+    // Reset all animations
+    title.classList.remove('show');
+    image.classList.remove('show');
+    setting.classList.remove('show');
+    hook.classList.remove('show');
+    beginBtn.classList.remove('show');
+
+    // Stop menu music if playing
+    if (typeof stopMenuMusic === 'function') stopMenuMusic();
+
+    // Show overlay and fade to black
+    overlay.classList.add('active');
+    requestAnimationFrame(() => {
+        overlay.classList.add('visible');
+    });
+
+    // Start game-specific music
+    startIntroMusic(game);
+
+    // Sequence the reveals — slow, cinematic pacing
+    setTimeout(() => title.classList.add('show'), 3500);
+    setTimeout(() => image.classList.add('show'), 8000);
+    setTimeout(() => setting.classList.add('show'), 14000);
+    setTimeout(() => hook.classList.add('show'), 20000);
+    setTimeout(() => beginBtn.classList.add('show'), 26000);
+
+    // BEGIN button handler
+    beginBtn.onclick = () => {
+        beginBtn.disabled = true;
+        beginBtn.textContent = 'BEGIN';
+
+        // Fade out music over 4s
+        if (introAudio) {
+            fadeOutAudio(introAudio, 4000);
+        }
+
+        // Fade overlay to black then navigate
+        title.classList.remove('show');
+        image.classList.remove('show');
+        setting.classList.remove('show');
+        hook.classList.remove('show');
+        beginBtn.classList.remove('show');
+
+        setTimeout(() => {
+            window.location = 'game.php?id=' + game.id;
+        }, 4000);
+    };
+}
+
+async function startIntroMusic(game) {
+    try {
+        const params = new URLSearchParams();
+        if (game.setting_description) params.set('setting', game.setting_description);
+        if (game.time_period) params.set('period', game.time_period);
+
+        const res = await fetch('api/music.php?' + params.toString());
+        const data = await res.json();
+
+        if (data.success && data.tracks?.length) {
+            const track = data.tracks[Math.floor(Math.random() * data.tracks.length)];
+            introAudio = new Audio(track.url);
+            introAudio.volume = 0;
+            introAudio.play().then(() => {
+                // Fade in over 3s
+                fadeInAudio(introAudio, 0.3, 3000);
+            }).catch(() => {});
+        }
+    } catch (e) {
+        // Music is non-essential
+    }
+}
+
+function fadeInAudio(audio, targetVol, duration) {
+    const steps = 30;
+    const interval = duration / steps;
+    const increment = targetVol / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= targetVol) {
+            audio.volume = targetVol;
+            clearInterval(timer);
+        } else {
+            audio.volume = current;
+        }
+    }, interval);
+}
+
+function fadeOutAudio(audio, duration) {
+    const steps = 30;
+    const interval = duration / steps;
+    const startVol = audio.volume;
+    const decrement = startVol / steps;
+    let current = startVol;
+    const timer = setInterval(() => {
+        current -= decrement;
+        if (current <= 0) {
+            audio.volume = 0;
+            audio.pause();
+            clearInterval(timer);
+        } else {
+            audio.volume = current;
+        }
+    }, interval);
 }
 
 async function cloneFromDetail() {
@@ -341,7 +485,18 @@ async function newGame() {
         await generateAllArt(artProgress, gameId);
         if (artProgress) artProgress.style.display = 'none';
 
-        // Navigate to game page
+        // Fetch game data for cinematic intro
+        try {
+            const gamesResult = await api('api/games.php');
+            const newGame = gamesResult.games?.find(g => g.id == gameId);
+            if (newGame) {
+                resetUI();
+                playIntro(newGame);
+                return;
+            }
+        } catch (e) {}
+
+        // Fallback: navigate directly
         window.location = 'game.php?id=' + gameId;
 
     } catch (e) {

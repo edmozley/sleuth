@@ -1126,6 +1126,123 @@ body.page-game {
     gap: 6px;
 }
 
+/* ---- Cinematic Intro ---- */
+.intro-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #000;
+    opacity: 0;
+    transition: opacity 3s ease;
+    overflow-y: auto;
+}
+.intro-overlay.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.intro-overlay.visible {
+    opacity: 1;
+}
+
+.intro-overlay .intro-content {
+    text-align: center;
+    max-width: 900px;
+    width: 90vw;
+    padding: 60px 40px;
+}
+
+.intro-overlay .intro-title {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 3em;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-shadow: 0 0 40px rgba(233,69,96,0.6), 0 4px 12px rgba(0,0,0,0.8);
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 4s ease, transform 4s ease;
+}
+.intro-overlay .intro-title.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.intro-overlay .intro-image {
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 16/10;
+    margin: 0 auto 40px;
+    border-radius: 12px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 120px rgba(233,69,96,0.15);
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 5s ease, transform 5s ease;
+}
+.intro-overlay .intro-image.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.intro-overlay .intro-setting {
+    font-size: 1.15em;
+    line-height: 1.7;
+    color: #999;
+    margin-bottom: 35px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 4s ease, transform 4s ease;
+}
+.intro-overlay .intro-setting.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.intro-overlay .intro-hook {
+    font-size: 1.3em;
+    line-height: 1.6;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 50px;
+    text-shadow: 0 0 20px rgba(233,69,96,0.4);
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 4s ease, transform 4s ease;
+}
+.intro-overlay .intro-hook.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.intro-overlay .intro-begin {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 1.8em;
+    letter-spacing: 6px;
+    color: var(--accent);
+    background: transparent;
+    border: 2px solid var(--accent);
+    padding: 16px 60px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-shadow: 0 0 20px rgba(233,69,96,0.5);
+    box-shadow: 0 0 30px rgba(233,69,96,0.2);
+    transition: opacity 3.5s ease, transform 3.5s ease, background 0.3s, box-shadow 0.3s;
+    opacity: 0;
+    transform: translateY(8px);
+}
+.intro-overlay .intro-begin.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+.intro-overlay .intro-begin:hover {
+    background: rgba(233,69,96,0.15);
+    box-shadow: 0 0 50px rgba(233,69,96,0.4);
+}
+
 .home-header h1 {
     color: var(--accent);
     font-family: 'Permanent Marker', cursive;

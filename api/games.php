@@ -12,7 +12,7 @@ try {
                g.profile_id,
                pr.name as profile_name, pr.color as profile_color,
                ps.moves_taken, ps.accusations_remaining,
-               p.setting_description, p.time_period,
+               p.setting_description, p.time_period, p.victim_name, p.backstory,
                (SELECT COUNT(*) FROM notebook_entries WHERE game_id = g.id) as clues_found,
                (SELECT COUNT(*) FROM locations WHERE game_id = g.id) as location_count,
                (SELECT COUNT(*) FROM characters_game WHERE game_id = g.id) as character_count

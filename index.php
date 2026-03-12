@@ -96,6 +96,17 @@ $profile = Auth::getProfile();
     </div>
 </div>
 
+<!-- Cinematic Intro Overlay -->
+<div class="intro-overlay" id="intro-overlay">
+    <div class="intro-content">
+        <h1 class="intro-title" id="intro-title"></h1>
+        <div class="intro-image" id="intro-image"></div>
+        <p class="intro-setting" id="intro-setting"></p>
+        <p class="intro-hook" id="intro-hook"></p>
+        <button class="intro-begin" id="intro-begin">BEGIN</button>
+    </div>
+</div>
+
 <!-- Error Modal -->
 <div class="modal-overlay" id="error-modal">
     <div class="modal-content error-modal-content">
