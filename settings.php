@@ -46,6 +46,7 @@ $config += ['anthropic_api_key' => '', 'openai_api_key' => '', 'venice_api_key' 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php include __DIR__ . '/includes/pwa-head.php'; ?>
     <title>Sleuth - Settings</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }

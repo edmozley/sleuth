@@ -1,0 +1,55 @@
+/* ============================================================
+   MOBILE HOME — only applies at 768px and below.
+   ============================================================ */
+@media (max-width: 768px), (display-mode: standalone) {
+
+/* ---- Nav bar: wrap and compact ---- */
+.home-nav {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+.home-nav a {
+    font-size: 0.8em;
+    padding: 4px 8px;
+}
+
+/* ---- Home header ---- */
+.home-header h1 {
+    font-size: 2.2em;
+}
+
+/* ---- Game detail modal: stack image above text ---- */
+.detail-top {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.detail-cover {
+    width: 100%;
+    max-width: 240px;
+    min-width: unset;
+}
+
+.detail-info {
+    text-align: center;
+}
+
+.game-detail {
+    padding: 20px 16px;
+}
+
+/* ---- Game cards grid: 2 columns on mobile ---- */
+.game-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+}
+
+/* ---- Splash screen padding ---- */
+.splash-home {
+    padding: 12px;
+}
+
+} /* end @media */

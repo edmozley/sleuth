@@ -670,7 +670,9 @@ function drawFullscreenMap() {
     const padding = 90;
     const nodeW = 160, nodeH = 160;
     const floorGap = 50;
-    const floorWidth = numFloors > 1 ? (w - floorGap * (numFloors - 1)) / numFloors : w;
+    const verticalFloors = window._mobileMapVerticalFloors && numFloors > 1;
+    const floorWidth = verticalFloors ? w : (numFloors > 1 ? (w - floorGap * (numFloors - 1)) / numFloors : w);
+    const floorHeight = verticalFloors ? (h - floorGap * (numFloors - 1)) / numFloors : h;
 
     // Group characters and objects by location
     const charsByLoc = {};
@@ -687,6 +689,13 @@ function drawFullscreenMap() {
     function pos(l) {
         const z = +(l.z_pos || 0);
         const floorIdx = floorKeys.indexOf(z);
+        if (verticalFloors) {
+            const floorOff = floorIdx * (floorHeight + floorGap);
+            return {
+                x: padding + ((+l.x_pos - minX) / rangeX) * (floorWidth - padding * 2 - nodeW) + nodeW / 2,
+                y: floorOff + padding + 25 + ((+l.y_pos - minY) / rangeY) * (floorHeight - padding * 2 - nodeH - 25) + nodeH / 2
+            };
+        }
         const floorOff = floorIdx * (floorWidth + floorGap);
         return {
             x: floorOff + padding + ((+l.x_pos - minX) / rangeX) * (floorWidth - padding * 2 - nodeW) + nodeW / 2,
@@ -697,20 +706,38 @@ function drawFullscreenMap() {
     // Floor labels and dividers
     const floorLabels = { '-1': 'Basement', '0': 'Ground Floor', '1': 'Upper Floor', '2': '2nd Floor' };
     floorKeys.forEach((z, idx) => {
-        const floorOff = idx * (floorWidth + floorGap);
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(floorLabels[z] || 'Floor ' + z, floorOff + floorWidth / 2, 22);
-        if (idx > 0) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([6, 4]);
-            ctx.beginPath();
-            ctx.moveTo(floorOff - floorGap / 2, 0);
-            ctx.lineTo(floorOff - floorGap / 2, h);
-            ctx.stroke();
-            ctx.setLineDash([]);
+        if (verticalFloors) {
+            const floorOff = idx * (floorHeight + floorGap);
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(floorLabels[z] || 'Floor ' + z, 12, floorOff + 22);
+            if (idx > 0) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                ctx.moveTo(0, floorOff - floorGap / 2);
+                ctx.lineTo(w, floorOff - floorGap / 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        } else {
+            const floorOff = idx * (floorWidth + floorGap);
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(floorLabels[z] || 'Floor ' + z, floorOff + floorWidth / 2, 22);
+            if (idx > 0) {
+                ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                ctx.moveTo(floorOff - floorGap / 2, 0);
+                ctx.lineTo(floorOff - floorGap / 2, h);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
         }
     });
 
@@ -1076,7 +1103,6 @@ async function showAccuseModal() {
                         ${!c.image ? '<div class="accuse-card-placeholder">?</div>' : ''}
                     </div>
                     <div class="accuse-card-name">${esc(c.name)}</div>
-                    <div class="accuse-card-role">${esc(c.role)}</div>
                 `;
                 card.onclick = () => selectSuspect(c.id, card);
                 suspectsGrid.appendChild(card);

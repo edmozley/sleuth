@@ -8,8 +8,10 @@ Auth::requireProfile();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php include __DIR__ . '/includes/pwa-head.php'; ?>
     <title>Sleuth - Murder Mystery</title>
     <link rel="stylesheet" href="assets/css/game.css">
+    <link rel="stylesheet" href="assets/css/game-mobile.css">
 </head>
 <body class="page-game">
 
@@ -249,7 +251,14 @@ Auth::requireProfile();
     </div>
 </div>
 
+<script>
+// Detect mobile: cookie override, PWA standalone, or narrow viewport
+if (document.cookie.includes('force_mobile=1') || window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches || window.innerWidth <= 768) {
+    document.documentElement.classList.add('is-mobile');
+}
+</script>
 <script src="assets/js/motive-icons.js"></script>
 <script src="assets/js/game.js"></script>
+<script src="assets/js/game-mobile.js"></script>
 </body>
 </html>

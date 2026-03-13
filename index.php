@@ -9,11 +9,13 @@ $profile = Auth::getProfile();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <?php include __DIR__ . '/includes/pwa-head.php'; ?>
     <title>Sleuth - Murder Mystery</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/game.css">
+    <link rel="stylesheet" href="assets/css/home-mobile.css">
 </head>
 <body>
 
@@ -27,6 +29,7 @@ $profile = Auth::getProfile();
         <a href="debug.php">Debug</a>
         <a href="settings.php">Settings</a>
         <a href="dbverify.php">Database</a>
+        <a href="#" id="mobile-toggle" onclick="toggleMobileMode(event)" style="color:var(--warning);"></a>
         <div class="menu-music" id="menu-music" style="display:none;">
             <button class="music-toggle" id="menu-music-toggle" onclick="toggleMenuMusic()" title="Toggle music">&#9835;</button>
             <button class="music-skip" id="menu-music-skip" onclick="skipMenuTrack()" title="Next track">&#9197;</button>
@@ -135,5 +138,23 @@ $profile = Auth::getProfile();
 
 <script src="assets/js/home.js"></script>
 <script src="assets/js/menu-music.js"></script>
+<script>
+function toggleMobileMode(e) {
+    e.preventDefault();
+    const isOn = document.cookie.includes('force_mobile=1');
+    if (isOn) {
+        document.cookie = 'force_mobile=0;path=/;max-age=31536000';
+    } else {
+        document.cookie = 'force_mobile=1;path=/;max-age=31536000';
+    }
+    location.reload();
+}
+// Set button label
+(function() {
+    const btn = document.getElementById('mobile-toggle');
+    const isOn = document.cookie.includes('force_mobile=1');
+    btn.textContent = isOn ? 'Desktop Mode' : 'Mobile Mode';
+})();
+</script>
 </body>
 </html>
