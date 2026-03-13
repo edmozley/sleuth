@@ -54,7 +54,8 @@ class Claude
 
         return [
             'content' => $data['content'][0]['text'] ?? '',
-            'usage' => $data['usage'] ?? []
+            'usage' => $data['usage'] ?? [],
+            'stop_reason' => $data['stop_reason'] ?? null
         ];
     }
 
@@ -75,6 +76,11 @@ class Claude
 
         if (isset($result['error'])) {
             return $result;
+        }
+
+        // Detect truncated responses
+        if (($result['stop_reason'] ?? null) === 'max_tokens') {
+            return ['error' => 'Response truncated (max_tokens reached). The AI generated more content than the token limit allows.', 'raw' => '{' . $result['content']];
         }
 
         // Prepend the prefilled '{' back onto the response

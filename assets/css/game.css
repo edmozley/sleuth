@@ -1638,6 +1638,12 @@ body.page-game {
     margin-bottom: 30px;
 }
 
+#progress-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 30px;
+}
+
 .progress-step {
     display: flex;
     align-items: center;

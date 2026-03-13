@@ -368,6 +368,7 @@ async function deleteFromDetail() {
 const PROGRESS_STEPS = [
     'Crafting the plot and backstory...',
     'Designing locations and map...',
+    'Writing location descriptions...',
     'Creating characters and suspects...',
     'Placing objects and evidence...',
     'Planting clues and red herrings...',
@@ -453,13 +454,18 @@ async function newGame() {
 
         const gameId = plotResult.game_id;
 
-        // Step 2: Locations
+        // Step 2: Location skeleton (map structure)
         advanceProgress(1);
         const locResult = await api('api/generate.php', { step: 'locations', game_id: gameId });
         if (!locResult.success) { showError(locResult.error, locResult.raw); resetUI(); return; }
 
-        // Step 3: Characters
+        // Step 3: Location descriptions (atmospheric detail)
         advanceProgress(2);
+        const descResult = await api('api/generate.php', { step: 'location_descriptions', game_id: gameId });
+        if (!descResult.success) { showError(descResult.error, descResult.raw); resetUI(); return; }
+
+        // Step 4: Characters
+        advanceProgress(3);
         const charResult = await api('api/generate.php', {
             step: 'characters', game_id: gameId,
             victim: plotResult.plot.victim,
@@ -467,13 +473,13 @@ async function newGame() {
         });
         if (!charResult.success) { showError(charResult.error, charResult.raw); resetUI(); return; }
 
-        // Step 4: Objects
-        advanceProgress(3);
+        // Step 5: Objects
+        advanceProgress(4);
         const objResult = await api('api/generate.php', { step: 'objects', game_id: gameId });
         if (!objResult.success) { showError(objResult.error, objResult.raw); resetUI(); return; }
 
-        // Step 5: Clues + finalize
-        advanceProgress(4);
+        // Step 6: Clues + finalize
+        advanceProgress(5);
         const clueResult = await api('api/generate.php', { step: 'clues', game_id: gameId });
         if (!clueResult.success) { showError(clueResult.error, clueResult.raw); resetUI(); return; }
 

@@ -123,9 +123,9 @@ PROMPT;
 
     $plotContext = "Title: {$plotRow['title']}. Setting: {$plotRow['setting_description']}. Time: {$plotRow['time_period']}. Victim: {$plotRow['victim_name']}. Killer: {$plotRow['killer_name']}. Weapon: {$plotRow['weapon']}. Motive: {$plotRow['motive']}. Backstory: {$plotRow['backstory']}.";
 
-    // ========== STEP 2: LOCATIONS ==========
+    // ========== STEP 2a: LOCATIONS (skeleton — names, coordinates, connections) ==========
     if ($step === 'locations') {
-        $prompt = <<<PROMPT
+        $skeletonPrompt = <<<PROMPT
 You are designing locations for a murder mystery text adventure game.
 
 PLOT CONTEXT:
@@ -156,12 +156,11 @@ CONSTRAINTS:
 6. Every location must be reachable from every other.
 7. Create an interesting graph, NOT a straight line. At least one hub room with 3+ connections. Most rooms should have 2-3 connections.
 
-Return JSON:
+Return JSON with ONLY structural data — do NOT include full descriptions:
 {
     "locations": [
         {
             "name": "string",
-            "description": "full atmospheric description (2-3 sentences)",
             "short_description": "one line summary",
             "x_pos": 0,
             "y_pos": 0,
@@ -187,21 +186,21 @@ COMMON-SENSE FLOOR DEFAULTS:
 
 EVERY connection listed must have its reverse on the other location. Do not skip any.
 PROMPT;
-        $result = $claude->sendJson($prompt, "Generate locations for this mystery. Seed: {$seed}", 0.8, 4096);
+        $result = $claude->sendJson($skeletonPrompt, "Generate location map skeleton for this mystery. Seed: {$seed}", 0.8, 4096);
         if (isset($result['error'])) {
-            echo json_encode(['success' => false, 'error' => 'Location generation failed: ' . $result['error'], 'raw' => $result['raw'] ?? null]);
+            echo json_encode(['success' => false, 'error' => 'Location skeleton generation failed: ' . $result['error'], 'raw' => $result['raw'] ?? null]);
             exit;
         }
         $data = $result['data'];
 
-        // Store locations
+        // Store locations with short_description as placeholder description
         $locationIds = [];
         $stmt = $pdo->prepare("INSERT INTO locations (game_id, name, description, short_description, x_pos, y_pos, z_pos, discovered) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $startingLocation = $data['starting_location'] ?? $data['locations'][0]['name'];
 
         foreach ($data['locations'] as $loc) {
             $isStart = ($loc['name'] === $startingLocation) ? 1 : 0;
-            $stmt->execute([$gameId, $loc['name'], $loc['description'], $loc['short_description'], $loc['x_pos'] ?? 0, $loc['y_pos'] ?? 0, $loc['z_pos'] ?? 0, $isStart]);
+            $stmt->execute([$gameId, $loc['name'], $loc['short_description'], $loc['short_description'], $loc['x_pos'] ?? 0, $loc['y_pos'] ?? 0, $loc['z_pos'] ?? 0, $isStart]);
             $locationIds[$loc['name']] = (int)$pdo->lastInsertId();
         }
 
@@ -266,7 +265,6 @@ PROMPT;
             foreach ($conns as $c) {
                 $reverseDir = $opposites[$c['direction']] ?? null;
                 if (!$reverseDir) continue;
-                // Check if reverse exists
                 $hasReverse = false;
                 foreach ($allConns[$c['to']] ?? [] as $rc) {
                     if ($rc['to'] === $from && $rc['direction'] === $reverseDir) {
@@ -275,7 +273,6 @@ PROMPT;
                     }
                 }
                 if (!$hasReverse) {
-                    // Check the target doesn't already use that direction for something else
                     $dirTaken = false;
                     foreach ($allConns[$c['to']] ?? [] as $rc) {
                         if ($rc['direction'] === $reverseDir) {
@@ -319,6 +316,62 @@ PROMPT;
         }
 
         echo json_encode(['success' => true, 'locations' => array_keys($locationIds)]);
+        exit;
+    }
+
+    // ========== STEP 2b: LOCATION DESCRIPTIONS (atmospheric detail for each location) ==========
+    if ($step === 'location_descriptions') {
+        // Load existing locations
+        $stmt = $pdo->prepare("SELECT id, name, short_description FROM locations WHERE game_id = ?");
+        $stmt->execute([$gameId]);
+        $locations = $stmt->fetchAll();
+        if (empty($locations)) throw new Exception('No locations found for this game');
+
+        $locationList = [];
+        foreach ($locations as $loc) {
+            $locationList[] = $loc['name'] . ' — ' . $loc['short_description'];
+        }
+        $locationListStr = implode("\n", $locationList);
+
+        $descPrompt = <<<PROMPT
+You are writing atmospheric descriptions for locations in a murder mystery text adventure game.
+
+PLOT CONTEXT:
+{$plotContext}
+
+Here are the locations that need full descriptions:
+{$locationListStr}
+
+For each location, write a rich, atmospheric description (2-3 sentences) that evokes the setting and mood. Mention relevant details tied to the plot where appropriate (e.g. where the body was found, where a suspect was last seen, notable evidence).
+
+Return JSON:
+{
+    "descriptions": {
+        "Location Name": "Full atmospheric description here...",
+        "Another Location": "Full atmospheric description here..."
+    }
+}
+
+Use the EXACT location names as keys. Every location listed above must have a description.
+PROMPT;
+        $descResult = $claude->sendJson($descPrompt, "Write atmospheric descriptions for all locations. Seed: {$seed}", 0.8, 8192);
+        if (isset($descResult['error'])) {
+            echo json_encode(['success' => false, 'error' => 'Location description generation failed: ' . $descResult['error'], 'raw' => $descResult['raw'] ?? null]);
+            exit;
+        }
+        $descriptions = $descResult['data']['descriptions'] ?? [];
+
+        // Update each location with its full description
+        $updateStmt = $pdo->prepare("UPDATE locations SET description = ? WHERE game_id = ? AND name = ?");
+        $updated = 0;
+        foreach ($locations as $loc) {
+            if (isset($descriptions[$loc['name']])) {
+                $updateStmt->execute([$descriptions[$loc['name']], $gameId, $loc['name']]);
+                $updated++;
+            }
+        }
+
+        echo json_encode(['success' => true, 'updated' => $updated, 'total' => count($locations)]);
         exit;
     }
 

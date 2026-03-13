@@ -126,7 +126,7 @@ COMMON-SENSE FLOOR DEFAULTS:
 - Use ONLY the exact room names from the list above.
 PROMPT;
 
-    $result = $claude->sendJson($prompt, "Design a map for these rooms: {$locationNames}. Seed: {$seed}", 0.8, 4096);
+    $result = $claude->sendJson($prompt, "Design a map for these rooms: {$locationNames}. Seed: {$seed}", 0.8, 8192);
     if (isset($result['error'])) {
         throw new Exception('AI generation failed: ' . $result['error']);
     }
