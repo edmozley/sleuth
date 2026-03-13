@@ -347,7 +347,8 @@ PROMPT;
         $nbStmt = $pdo->prepare("INSERT INTO notebook_entries (game_id, entry_text, entry_type, source, clue_id) VALUES (?, ?, ?, ?, ?)");
         $clueCheck = $pdo->prepare("SELECT id FROM clues WHERE id = ? AND game_id = ?");
         foreach ($response['clue_notebook_entries'] as $entry) {
-            $clueId = $entry['clue_id'] ?? null;
+            $clueId = isset($entry['clue_id']) && is_numeric($entry['clue_id']) && (int)$entry['clue_id'] > 0
+                ? (int)$entry['clue_id'] : null;
             if ($clueId) {
                 $clueCheck->execute([$clueId, $gameId]);
                 if (!$clueCheck->fetch()) $clueId = null;

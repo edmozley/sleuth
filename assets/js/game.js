@@ -996,7 +996,7 @@ function closeMapDetail() {
 // ---- Accusation ----
 let selectedSuspectId = null;
 let selectedWeaponId = null;
-let selectedMotiveIndex = null;
+let selectedMotiveId = null;
 let accuseStep = 0;
 let accuseHasMotives = false;
 
@@ -1051,12 +1051,16 @@ function accuseBack() {
 async function showAccuseModal() {
     selectedSuspectId = null;
     selectedWeaponId = null;
-    selectedMotiveIndex = null;
+    selectedMotiveId = null;
 
     const suspectsGrid = document.getElementById('accuse-suspects');
     const weaponsGrid = document.getElementById('accuse-weapons');
     suspectsGrid.innerHTML = '';
     weaponsGrid.innerHTML = '';
+
+    // Determine if per-character motives are available
+    const charMotives = currentState?.character_motives || null;
+    accuseHasMotives = charMotives && Object.keys(charMotives).length > 0;
 
     // Load met characters
     try {
@@ -1103,43 +1107,52 @@ async function showAccuseModal() {
         document.getElementById('accuse-weapons-empty').style.display = '';
     }
 
-    // Load motive options
+    // Clear motive grid (will be populated when suspect is selected)
     const motivesGrid = document.getElementById('accuse-motives');
     motivesGrid.innerHTML = '';
-    const motives = currentState?.motive_options || [];
-    accuseHasMotives = motives.length > 0;
-    if (accuseHasMotives) {
-        // Shuffle motives so correct answer isn't always first
-        const shuffled = motives.map((m, i) => ({...m, originalIndex: i}));
-        for (let i = shuffled.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        shuffled.forEach((m) => {
-            const card = document.createElement('div');
-            card.className = 'accuse-motive-card';
-            card.dataset.index = m.originalIndex;
-            const iconSvg = (typeof getMotiveIcon === 'function') ? getMotiveIcon(m.category) : '';
-            const categoryLabel = (typeof getMotiveLabel === 'function') ? getMotiveLabel(m.category) : m.category;
-            card.innerHTML = `
-                <div class="motive-icon">${iconSvg}</div>
-                <div class="motive-category">${esc(categoryLabel)}</div>
-                <div class="motive-text">${esc(m.text)}</div>
-            `;
-            card.onclick = () => selectMotive(m.originalIndex, card);
-            motivesGrid.appendChild(card);
-        });
-    }
 
     accuseGoToStep(0);
     document.getElementById('accuse-modal').classList.add('active');
+}
+
+function loadMotiveCards(motives) {
+    const motivesGrid = document.getElementById('accuse-motives');
+    motivesGrid.innerHTML = '';
+    // Shuffle motives so correct answer isn't always in the same position
+    const shuffled = [...motives];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    shuffled.forEach((m) => {
+        const card = document.createElement('div');
+        card.className = 'accuse-motive-card';
+        card.setAttribute('data-motive-id', m.id);
+        const iconSvg = (typeof getMotiveIcon === 'function') ? getMotiveIcon(m.category) : '';
+        const categoryLabel = (typeof getMotiveLabel === 'function') ? getMotiveLabel(m.category) : m.category;
+        card.innerHTML = `
+            <div class="motive-icon">${iconSvg}</div>
+            <div class="motive-category">${esc(categoryLabel)}</div>
+            <div class="motive-text">${esc(m.text)}</div>
+        `;
+        card.onclick = () => selectMotive(m.id, card);
+        motivesGrid.appendChild(card);
+    });
 }
 
 function selectSuspect(id, card) {
     document.querySelectorAll('#accuse-suspects .accuse-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
     selectedSuspectId = id;
+    selectedMotiveId = null;
     document.getElementById('accuse-next-suspect').disabled = false;
+    document.getElementById('accuse-next-motive').disabled = true;
+
+    // Load per-character motives for selected suspect
+    const charMotives = currentState?.character_motives || null;
+    if (charMotives && charMotives[id]) {
+        loadMotiveCards(charMotives[id]);
+    }
 }
 
 function selectWeapon(id, card) {
@@ -1149,10 +1162,10 @@ function selectWeapon(id, card) {
     document.getElementById('accuse-next-weapon').disabled = false;
 }
 
-function selectMotive(index, card) {
+function selectMotive(id, card) {
     document.querySelectorAll('#accuse-motives .accuse-motive-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
-    selectedMotiveIndex = index;
+    selectedMotiveId = id;
     document.getElementById('accuse-next-motive').disabled = false;
 }
 
@@ -1165,7 +1178,7 @@ function updateAccuseSummary() {
     let summaryHtml = `<strong>${esc(suspectName)}</strong> did it with the <strong>${esc(weaponName)}</strong>`;
 
     if (accuseHasMotives) {
-        const motiveCard = (selectedMotiveIndex !== null) ? document.querySelector(`#accuse-motives .accuse-motive-card[data-index="${selectedMotiveIndex}"]`) : null;
+        const motiveCard = (selectedMotiveId !== null) ? document.querySelector(`#accuse-motives .accuse-motive-card[data-motive-id="${selectedMotiveId}"]`) : null;
         const motiveLabel = motiveCard ? motiveCard.querySelector('.motive-category').textContent : '???';
         summaryHtml += `<br>because of <strong>${esc(motiveLabel)}</strong>`;
     }
@@ -1188,8 +1201,8 @@ async function submitAccusation() {
             accused_id: selectedSuspectId,
             weapon_id: selectedWeaponId
         };
-        if (selectedMotiveIndex !== null) {
-            payload.motive_index = selectedMotiveIndex;
+        if (selectedMotiveId !== null) {
+            payload.motive_id = selectedMotiveId;
         }
         const result = await api('api/accuse.php', payload);
 

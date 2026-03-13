@@ -86,15 +86,26 @@ try {
         }
     }
 
-    // Motive check: if motive_options exist in the plot, validate the selected motive
-    $motiveCorrect = true; // Default true for older games without motive_options
+    // Motive check: per-character motives
+    $motiveCorrect = true; // Default true for games without motives yet
     $hasMotives = false;
-    $motiveOptions = !empty($plot['motive_options']) ? json_decode($plot['motive_options'], true) : null;
-    if ($motiveOptions && is_array($motiveOptions)) {
-        $hasMotives = true;
-        $motiveIndex = isset($input['motive_index']) ? (int)$input['motive_index'] : -1;
-        if ($motiveIndex >= 0 && $motiveIndex < count($motiveOptions)) {
-            $motiveCorrect = !empty($motiveOptions[$motiveIndex]['is_correct']);
+
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM character_motives WHERE game_id = ?");
+    $stmt->execute([$gameId]);
+    $hasMotives = (int)$stmt->fetchColumn() > 0;
+
+    if ($hasMotives) {
+        $motiveId = isset($input['motive_id']) ? (int)$input['motive_id'] : 0;
+        if ($motiveId > 0) {
+            // Validate the motive belongs to the accused character in this game
+            $stmt = $pdo->prepare("SELECT is_correct FROM character_motives WHERE id = ? AND game_id = ? AND character_id = ?");
+            $stmt->execute([$motiveId, $gameId, $accusedId]);
+            $motiveRow = $stmt->fetch();
+            if ($motiveRow) {
+                $motiveCorrect = (bool)$motiveRow['is_correct'];
+            } else {
+                $motiveCorrect = false;
+            }
         } else {
             $motiveCorrect = false;
         }

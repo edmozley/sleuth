@@ -162,6 +162,17 @@ $tables = [
         FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 
+    'character_motives' => "CREATE TABLE IF NOT EXISTS character_motives (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        game_id INT NOT NULL,
+        character_id INT NOT NULL,
+        motive_text TEXT NOT NULL,
+        category VARCHAR(50) NOT NULL,
+        is_correct TINYINT(1) DEFAULT 0,
+        FOREIGN KEY (game_id) REFERENCES games(id) ON DELETE CASCADE,
+        FOREIGN KEY (character_id) REFERENCES characters_game(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+
     'settings' => "CREATE TABLE IF NOT EXISTS settings (
         setting_key VARCHAR(100) PRIMARY KEY,
         setting_value VARCHAR(2000) NOT NULL DEFAULT ''

@@ -370,6 +370,7 @@ const PROGRESS_STEPS = [
     'Designing locations and map...',
     'Writing location descriptions...',
     'Creating characters and suspects...',
+    'Weaving motives for each suspect...',
     'Placing objects and evidence...',
     'Planting clues and red herrings...',
     'Setting the scene...',
@@ -473,13 +474,18 @@ async function newGame() {
         });
         if (!charResult.success) { showError(charResult.error, charResult.raw); resetUI(); return; }
 
-        // Step 5: Objects
+        // Step 5: Motives (per-character)
         advanceProgress(4);
+        const motiveResult = await api('api/generate.php', { step: 'motives', game_id: gameId });
+        if (!motiveResult.success) { showError(motiveResult.error, motiveResult.raw); resetUI(); return; }
+
+        // Step 6: Objects
+        advanceProgress(5);
         const objResult = await api('api/generate.php', { step: 'objects', game_id: gameId });
         if (!objResult.success) { showError(objResult.error, objResult.raw); resetUI(); return; }
 
-        // Step 6: Clues + finalize
-        advanceProgress(5);
+        // Step 7: Clues + finalize
+        advanceProgress(6);
         const clueResult = await api('api/generate.php', { step: 'clues', game_id: gameId });
         if (!clueResult.success) { showError(clueResult.error, clueResult.raw); resetUI(); return; }
 

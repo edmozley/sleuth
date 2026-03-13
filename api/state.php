@@ -141,13 +141,18 @@ try {
     $stmt->execute([$gameId]);
     $actionLog = array_reverse($stmt->fetchAll());
 
-    // Motive options for accusation screen
-    $motiveOptions = null;
-    $stmt = $pdo->prepare("SELECT motive_options FROM plots WHERE game_id = ?");
+    // Per-character motives for accusation screen
+    $characterMotives = [];
+    $stmt = $pdo->prepare("SELECT id, character_id, motive_text, category FROM character_motives WHERE game_id = ? ORDER BY character_id, id");
     $stmt->execute([$gameId]);
-    $motiveRow = $stmt->fetch();
-    if ($motiveRow && $motiveRow['motive_options']) {
-        $motiveOptions = json_decode($motiveRow['motive_options'], true);
+    foreach ($stmt->fetchAll() as $row) {
+        $charId = (int)$row['character_id'];
+        if (!isset($characterMotives[$charId])) $characterMotives[$charId] = [];
+        $characterMotives[$charId][] = [
+            'id' => (int)$row['id'],
+            'text' => $row['motive_text'],
+            'category' => $row['category']
+        ];
     }
 
     echo json_encode([
@@ -166,7 +171,7 @@ try {
         'map_characters' => $mapCharacters,
         'map_objects' => $mapObjects,
         'action_log' => $actionLog,
-        'motive_options' => $motiveOptions
+        'character_motives' => !empty($characterMotives) ? $characterMotives : null
     ]);
 
 } catch (Exception $e) {

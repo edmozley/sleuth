@@ -87,6 +87,11 @@ if ($gameId) {
     $stmt->execute([$gameId]);
     $data['actions'] = $stmt->fetchAll();
 
+    // Per-character motives
+    $stmt = $pdo->prepare("SELECT cm.*, cg.name as character_name FROM character_motives cm JOIN characters_game cg ON cg.id = cm.character_id WHERE cm.game_id = ? ORDER BY cm.character_id, cm.id");
+    $stmt->execute([$gameId]);
+    $data['character_motives'] = $stmt->fetchAll();
+
     // Compute problems
     if ($data['game']) {
         $orphanedChars = array_filter($data['characters'], fn($c) => empty($c['location_id']));
@@ -110,7 +115,20 @@ if ($gameId) {
         if (empty($data['game']['art_style'])) $problems[] = 'No art style';
         if (empty($data['game']['cover_image'])) $problems[] = 'No cover image';
         if (empty($data['game']['weapon_object_id'])) $problems[] = 'No weapon object linked';
-        if (empty($data['game']['motive_options'])) $problems[] = 'No motive options';
+        // Check per-character motives for all non-victim characters
+        $charsNeedingMotives = array_filter($data['characters'], fn($c) => $c['role'] !== 'victim');
+        $charsWithMotives = !empty($data['character_motives'])
+            ? array_unique(array_column($data['character_motives'], 'character_id'))
+            : [];
+        $missingMotiveChars = [];
+        foreach ($charsNeedingMotives as $c) {
+            if (!in_array($c['id'], $charsWithMotives)) {
+                $missingMotiveChars[] = $c['name'];
+            }
+        }
+        if (count($missingMotiveChars) > 0) {
+            $problems[] = count($missingMotiveChars) . ' character(s) missing motives: ' . implode(', ', $missingMotiveChars);
+        }
 
         // Map validation
         $mapProblems = [];
@@ -488,11 +506,11 @@ if ($gameId) {
                 Clues <span class="nav-badge ok"><?= count($data['clues']) ?></span>
             </a>
             <?php
-                $motiveOpts = !empty($data['game']['motive_options']) ? json_decode($data['game']['motive_options'], true) : [];
-                $motiveCount = is_array($motiveOpts) ? count($motiveOpts) : 0;
+                $charMotiveCount = count($data['character_motives'] ?? []);
+                $motivesBadgeOk = $charMotiveCount > 0 && empty($missingMotiveChars);
             ?>
             <a class="nav-link" href="#sec-motives" onclick="event.preventDefault();jumpTo('motives')">
-                Motives <span class="nav-badge <?= $motiveCount ? 'ok' : '' ?>"><?= $motiveCount ?></span>
+                Motives <span class="nav-badge <?= $motivesBadgeOk ? 'ok' : '' ?>"><?= $charMotiveCount ?><?= !empty($missingMotiveChars) ? ' (' . count($missingMotiveChars) . '!)' : '' ?></span>
             </a>
             <a class="nav-link" href="#sec-notebook" onclick="event.preventDefault();jumpTo('notebook')">
                 Notebook <span class="nav-badge ok"><?= count($data['notebook']) ?></span>
@@ -1126,21 +1144,30 @@ if ($gameId) {
     <div class="debug-section" id="sec-motives">
         <div class="section-header" onclick="toggleSection('motives')">
             <span class="toggle" id="toggle-motives">&#9660;</span>
-            Motive Options <span class="count">(<?= $motiveCount ?>)</span>
+            Character Motives <span class="count">(<?= $charMotiveCount ?>)</span>
             <div class="section-actions">
                 <button onclick="event.stopPropagation(); generateMotives()">Generate Motives</button>
                 <button class="secondary" onclick="event.stopPropagation(); clearMotives()">Clear</button>
             </div>
         </div>
         <div class="section-body" id="body-motives">
-            <?php if ($motiveCount > 0): ?>
+            <?php if ($charMotiveCount > 0): ?>
+            <?php
+                // Group by character
+                $motivesByChar = [];
+                foreach ($data['character_motives'] as $cm) {
+                    $motivesByChar[$cm['character_name']][] = $cm;
+                }
+            ?>
+            <?php foreach ($motivesByChar as $charName => $charMotives): ?>
+            <h4 style="color:var(--accent);margin:16px 0 8px 0;"><?= htmlspecialchars($charName) ?></h4>
             <table>
                 <tr><th>#</th><th>Category</th><th>Motive Text</th><th>Correct?</th></tr>
-                <?php foreach ($motiveOpts as $i => $m): ?>
+                <?php foreach ($charMotives as $i => $m): ?>
                 <tr>
                     <td><?= $i + 1 ?></td>
                     <td><span class="badge badge-role"><?= htmlspecialchars($m['category'] ?? '?') ?></span></td>
-                    <td><?= htmlspecialchars($m['text'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($m['motive_text'] ?? '') ?></td>
                     <td>
                         <?php if (!empty($m['is_correct'])): ?>
                             <span class="badge badge-yes">CORRECT</span>
@@ -1151,9 +1178,10 @@ if ($gameId) {
                 </tr>
                 <?php endforeach; ?>
             </table>
+            <?php endforeach; ?>
             <p style="margin-top:12px;"><b style="color:#e94560;">Plot motive:</b> <?= htmlspecialchars($data['game']['motive'] ?? 'N/A') ?></p>
             <?php else: ?>
-            <p class="text-muted">No motive options generated for this game. Click "Generate Motives" to create them.</p>
+            <p class="text-muted">No character motives generated for this game. Click "Generate Motives" to create them.</p>
             <p style="margin-top:8px;"><b style="color:#e94560;">Plot motive:</b> <?= htmlspecialchars($data['game']['motive'] ?? 'N/A') ?></p>
             <?php endif; ?>
         </div>
@@ -1535,9 +1563,9 @@ if ($gameId) {
     }
 
     async function generateMotives() {
-        if (!await styledConfirm('Generate 5 motive options for this game? This will replace any existing motives.')) return;
+        if (!await styledConfirm('Generate 5 motives per character for this game? This will replace any existing motives.')) return;
         const body = document.getElementById('body-motives');
-        body.innerHTML = '<p style="color:#ffc700;">Generating motive options via AI...</p>';
+        body.innerHTML = '<p style="color:#ffc700;">Generating per-character motives via AI...</p>';
         try {
             const res = await fetch('api/fix_motives.php', {
                 method: 'POST',
@@ -1560,7 +1588,7 @@ if ($gameId) {
     }
 
     async function clearMotives() {
-        if (!await styledConfirm('Clear all motive options for this game?')) return;
+        if (!await styledConfirm('Clear all character motives for this game?')) return;
         try {
             const res = await fetch('api/fix_motives.php', {
                 method: 'POST',

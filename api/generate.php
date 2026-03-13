@@ -84,29 +84,8 @@ PROMPT;
         $timePeriod = $plot['time_period'] ?? 'present day';
         $artStyle = "Dark, moody, atmospheric illustration in the style of {$timePeriod} art. Setting: {$plot['setting_description']}. Painterly, dramatic lighting, rich detail, noir aesthetic.";
 
-        // Insert plot first (without motive_options)
         $stmt = $pdo->prepare("INSERT INTO plots (game_id, victim_name, killer_name, weapon, motive, backstory, setting_description, time_period, art_style) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$newGameId, $plot['victim']['name'], $plot['killer']['name'], $plot['weapon'], $plot['motive'], $plot['backstory'], $plot['setting_description'], $timePeriod, $artStyle]);
-
-        // Generate motive options using 3-step approach (AI categorises, PHP picks decoys, AI writes decoy texts)
-        $plotForMotives = [
-            'setting_description' => $plot['setting_description'],
-            'time_period' => $timePeriod,
-            'victim_name' => $plot['victim']['name'],
-            'killer_name' => $plot['killer']['name'],
-            'weapon' => $plot['weapon'],
-            'motive' => $plot['motive'],
-            'backstory' => $plot['backstory']
-        ];
-        try {
-            $motives = generateMotiveOptions($claude, $plotForMotives);
-            $stmt = $pdo->prepare("UPDATE plots SET motive_options = ? WHERE game_id = ?");
-            $stmt->execute([json_encode($motives), $newGameId]);
-            $plot['motive_options'] = $motives;
-        } catch (Exception $e) {
-            // Non-fatal: game still works without motives, debug page can regenerate
-            $plot['motive_options'] = null;
-        }
 
         echo json_encode(['success' => true, 'game_id' => $newGameId, 'title' => $plot['title'], 'plot' => $plot]);
         exit;
@@ -459,6 +438,39 @@ PROMPT;
         }
 
         echo json_encode(['success' => true, 'character_count' => count($data['characters']) + 2]);
+        exit;
+    }
+
+    // ========== STEP 3b: MOTIVES (per-character) ==========
+    if ($step === 'motives') {
+        // Load all characters for this game
+        $stmt = $pdo->prepare("SELECT id, name, role, description, backstory FROM characters_game WHERE game_id = ?");
+        $stmt->execute([$gameId]);
+        $characters = $stmt->fetchAll();
+
+        $plotForMotives = [
+            'setting_description' => $plotRow['setting_description'],
+            'time_period' => $plotRow['time_period'],
+            'victim_name' => $plotRow['victim_name'],
+            'killer_name' => $plotRow['killer_name'],
+            'weapon' => $plotRow['weapon'],
+            'motive' => $plotRow['motive'],
+            'backstory' => $plotRow['backstory']
+        ];
+
+        $motivesByChar = generateCharacterMotives($claude, $plotForMotives, $characters);
+
+        // Store in character_motives table
+        $insertStmt = $pdo->prepare("INSERT INTO character_motives (game_id, character_id, motive_text, category, is_correct) VALUES (?, ?, ?, ?, ?)");
+        $totalMotives = 0;
+        foreach ($motivesByChar as $charId => $motives) {
+            foreach ($motives as $m) {
+                $insertStmt->execute([$gameId, $charId, $m['text'], $m['category'], $m['is_correct'] ? 1 : 0]);
+                $totalMotives++;
+            }
+        }
+
+        echo json_encode(['success' => true, 'total_motives' => $totalMotives, 'characters_with_motives' => count($motivesByChar)]);
         exit;
     }
 

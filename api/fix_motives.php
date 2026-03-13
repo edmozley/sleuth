@@ -13,9 +13,9 @@ try {
     $action = $input['action'] ?? '';
 
     if ($action === 'clear') {
-        $stmt = $pdo->prepare("UPDATE plots SET motive_options = NULL WHERE game_id = ?");
+        $stmt = $pdo->prepare("DELETE FROM character_motives WHERE game_id = ?");
         $stmt->execute([$gameId]);
-        echo json_encode(['success' => true, 'message' => 'Motive options cleared']);
+        echo json_encode(['success' => true, 'message' => 'All motives cleared']);
         exit;
     }
 
@@ -25,18 +25,35 @@ try {
         $plot = $stmt->fetch();
         if (!$plot) throw new Exception('Plot not found');
 
-        $config = Database::getConfig();
-        if (empty($config['anthropic_api_key'])) throw new Exception('No API key configured');
+        $dbSettings = Database::getDbSettings($pdo);
+        if (empty($dbSettings['anthropic_api_key'])) throw new Exception('No API key configured');
 
-        $claude = new Claude($config['anthropic_api_key']);
+        $claude = new Claude($dbSettings['anthropic_api_key']);
 
-        // 3-step approach: AI categorises true motive, PHP picks decoy categories, AI writes decoys
-        $motives = generateMotiveOptions($claude, $plot);
+        // Load characters
+        $stmt = $pdo->prepare("SELECT id, name, role, description, backstory FROM characters_game WHERE game_id = ?");
+        $stmt->execute([$gameId]);
+        $characters = $stmt->fetchAll();
 
-        $stmt = $pdo->prepare("UPDATE plots SET motive_options = ? WHERE game_id = ?");
-        $stmt->execute([json_encode($motives), $gameId]);
+        if (empty($characters)) throw new Exception('No characters found for this game');
 
-        echo json_encode(['success' => true, 'message' => 'Generated ' . count($motives) . ' motive options']);
+        // Clear existing per-character motives
+        $stmt = $pdo->prepare("DELETE FROM character_motives WHERE game_id = ?");
+        $stmt->execute([$gameId]);
+
+        // Generate per-character motives
+        $motivesByChar = generateCharacterMotives($claude, $plot, $characters);
+
+        $insertStmt = $pdo->prepare("INSERT INTO character_motives (game_id, character_id, motive_text, category, is_correct) VALUES (?, ?, ?, ?, ?)");
+        $totalMotives = 0;
+        foreach ($motivesByChar as $charId => $motives) {
+            foreach ($motives as $m) {
+                $insertStmt->execute([$gameId, $charId, $m['text'], $m['category'], $m['is_correct'] ? 1 : 0]);
+                $totalMotives++;
+            }
+        }
+
+        echo json_encode(['success' => true, 'message' => "Generated {$totalMotives} motives for " . count($motivesByChar) . " characters"]);
         exit;
     }
 
